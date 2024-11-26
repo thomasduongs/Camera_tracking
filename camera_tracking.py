@@ -1,19 +1,12 @@
 import rospy
 import sys, time, os
-
 sys.path.insert(1, os.path.abspath("."))
-from lib.params import VISION_IMAGE_TOPIC
+from lib.params import BASE_DEST_TRANSFORM, VISION_IMAGE_TOPIC, REALSENSE2CAMERA, REALSENSE_IMAGE_TOPIC
 from lib.board_tracker import BoardTracker
+from lib.utils import *
 from src.fetch_controller_python.fetch_robot import FetchRobot
-from rospy.numpy_msg import numpy_msg
-from rospy_tutorials.msg import Floats
-from sensor_msgs.msg import Image
-from cv_bridge import CvBridge, CvBridgeError
-import cv2
+import cv2 
 import numpy as np
-
-
-
 import tf.transformations
 import numpy.linalg as la
 import matplotlib.pyplot as plt
@@ -29,11 +22,7 @@ from rospy.numpy_msg import numpy_msg
 from rospy_tutorials.msg import Floats
 
 
-sys.path.insert(1, os.path.abspath("."))
-from lib.params import BASE_DEST_TRANSFORM, VISION_IMAGE_TOPIC, REALSENSE2CAMERA, REALSENSE_IMAGE_TOPIC
-from lib.board_tracker import BoardTracker
-from lib.utils import *
-from src.fetch_controller_python.fetch_robot import FetchRobot
+
 
 
 class PoseTracker:
@@ -48,23 +37,25 @@ def execute(tag_pose):
     dy = tag_pose.position.y
     dz = tag_pose.position.z
     # dx, dy, dz = T
-    x_ratio = dx/dz
-    y_ratio = dy/dz
+    z_ratio = dz/dx
+    y_ratio = dy/dx
 
-    xThreshold = 0.364
-    yThreshold = 0.268
+    hThreshold = 1
+    vThreshold = 0.4663
 
-    alphaHorizontal = 0
-    alphaVertical = 0
+    if y_ratio > hThreshold:
+        alphaHorizontal = .01
+    elif y_ratio < -hThreshold:
+        alphaHorizontal = -.01
+    else: 
+        alphaHorizontal = 0
 
-    if x_ratio > xThreshold:
-        alphaHorizontal = .005
-    elif x_ratio < -xThreshold:
-        alphaHorizontal = -.005
-    if y_ratio > yThreshold:
-        alphaVertical = .005
-    elif y_ratio < -yThreshold:
-        alphaVertical = -.005
+    if z_ratio > vThreshold:
+        alphaVertical = .01
+    elif z_ratio < -vThreshold:
+        alphaVertical = -.01
+    else: 
+        alphaVertical = 0
 
     newHorizontal = ptk.cameraPosePan + alphaHorizontal
     newVertical = ptk.cameraPoseTilt + alphaVertical
