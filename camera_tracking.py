@@ -1,4 +1,4 @@
-import rospy
+import rospy 
 import sys, time, os
 sys.path.insert(1, os.path.abspath("."))
 from lib.params import BASE_DEST_TRANSFORM, VISION_IMAGE_TOPIC, REALSENSE2CAMERA, REALSENSE_IMAGE_TOPIC
@@ -23,8 +23,6 @@ from rospy_tutorials.msg import Floats
 
 
 
-
-
 class PoseTracker:
     def __init__(self):
         self.cameraPoseTilt = 0
@@ -33,49 +31,79 @@ class PoseTracker:
 bridge = CvBridge()
 
 def execute(tag_pose): 
-    dx = tag_pose.position.x
-    dy = tag_pose.position.y
-    dz = tag_pose.position.z
-    # dx, dy, dz = T
-    z_ratio = dz/dx
-    y_ratio = dy/dx
+    joint_states = get_latest_joint_state()
+    dx = tag_pose.position.x #forward
+    dy = tag_pose.position.y #left and right
+    dz = tag_pose.position.z-joint_states[0]-1.15 #up and down
+    #Camera at ~ z=-0.95m
+    # tilt_joint ranges [-0.785 (U), 1.5708 (D) rad] = [-45, 90] 
+    # pan_joint ranges [-1.5708 (R), 1.5708 (L) rad] = [-90, 90] 
 
-    hThreshold = 1
-    vThreshold = 0.4663
+    tiltAngle = -np.arctan2(dz, dx)
+    panAngle = np.arctan2(dy, dx)
 
-    if y_ratio > hThreshold:
-        alphaHorizontal = .01
-    elif y_ratio < -hThreshold:
-        alphaHorizontal = -.01
-    else: 
-        alphaHorizontal = 0
-
-    if z_ratio > vThreshold:
-        alphaVertical = .01
-    elif z_ratio < -vThreshold:
-        alphaVertical = -.01
-    else: 
-        alphaVertical = 0
-
-    newHorizontal = ptk.cameraPosePan + alphaHorizontal
-    newVertical = ptk.cameraPoseTilt + alphaVertical
-
-    print(ptk.cameraPosePan)
-    print(ptk.cameraPoseTilt)
-
-    if np.abs(newHorizontal) > 1.5708:
-        newHorizontal = ptk.cameraPosePan
-
-    if newVertical > 1.5708 or newVertical < -0.785:
-        newVertical = ptk.cameraPoseTilt
-
-    inputMatrix = [[newHorizontal, newVertical], [0.0 for _ in range(2)], [0.0 for _ in range(2)]]
+    inputMatrix = [[panAngle, tiltAngle], [0.0 for _ in range(2)], [0.0 for _ in range(2)]]
     robot.lookAt(inputMatrix)
 
-    ptk.cameraPosePan = newHorizontal
-    ptk.cameraPoseTilt = newVertical
+    ptk.cameraPosePan = panAngle
+    ptk.cameraPoseTilt = tiltAngle
 
+# Joint and link parameters
+MAX_JOINT_VEL = np.array([0.1, 1.25, 1.45, 1.57, 1.52, 1.57, 2.26, 2.26])
+JOINT_ACTION_SERVER = 'arm_with_torso_controller/follow_joint_trajectory'
+JOINT_NAMES = names = ['torso_lift_joint', 'shoulder_pan_joint', 'shoulder_lift_joint', 
+               'upperarm_roll_joint', 'elbow_flex_joint', 'forearm_roll_joint', 
+               'wrist_flex_joint', 'wrist_roll_joint']
+_joint_states = dict()
+link_name_left = "fetch::l_gripper_finger_link"
+link_name_right = "fetch::r_gripper_finger_link"
+base_link_pose = None
+link_pose_left = None
+link_pose_right = None
+# listener = tf.TransformListener()
 
+lock = Lock()
+
+def callback(msg):  
+    global link_pose_right
+    global link_pose_left
+    global base_link_pose
+    lock.acquire()
+
+    for i, name in enumerate(msg.name):
+        if i >= len(msg.position):
+            continue
+        _joint_states[name] = msg.position[i]
+        
+        try:
+            tf_matrices = get_tf_matrices(listener)
+
+            matrix = tf_matrices["baseLinkToRightFinger"]
+            # print(matrix)
+
+            link_pose_right = posefromMatrix(matrix)
+
+            matrix1 = tf_matrices["baseLinkToLeftFinger"]
+
+            link_pose_left = posefromMatrix(matrix)
+
+        except KeyError:
+            pass
+
+    lock.release()
+
+def get_latest_joint_state():
+    """
+    Returns: A list of the joint values. Values may be None if we do not
+        have a value for that joint yet.
+    """
+    lock.acquire()
+
+    ret = None
+    if all(name in _joint_states for name in names):
+        ret = [_joint_states[name] for name in names]
+    lock.release()
+    return ret if ret else None
 
 
 def posefromMatrix(matrix):
@@ -154,6 +182,7 @@ if __name__ == '__main__':
 
     sub_image = rospy.Subscriber(VISION_IMAGE_TOPIC, Image, image_callback)
     publisher = rospy.Publisher('board2cam', numpy_msg(Floats), queue_size=10)
+    rospy.Subscriber("/joint_states", JointState, callback)
 
     while not rospy.is_shutdown():
         rospy.spin()
