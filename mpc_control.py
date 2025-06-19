@@ -35,13 +35,6 @@ from src.fetch_controller_python.fetch_robot import FetchRobot
 bridge = CvBridge()
 message_counter = 0
 
-# q_matrix = np.array([[1, 0, 0, 0, 0, 0],
-#                      [0, 1, 0, 0, 0, 0],
-#                      [0, 0, 1, 0, 0, 0],
-#                      [0, 0, 0, 0.9, 0, 0],
-#                      [0, 0, 0, 0, 0.9, 0],
-#                      [0, 0, 0, 0, 0, 0.9]])
-
 
 q_matrix = np.array([[1, 0, 0, 0, 0, 0],
                      [0, 1, 0, 0, 0, 0],
@@ -50,10 +43,7 @@ q_matrix = np.array([[1, 0, 0, 0, 0, 0],
                      [0, 0, 0, 0, 1.5, 0],
                      [0, 0, 0, 0, 0, 1.5]])
 
-
 scalar1 = 350
-
-
 
 # LQR parameters
 lqr_Q = scalar1 * q_matrix
@@ -71,74 +61,11 @@ r_matrix = np.array([
     [0, 0, 0, 0, 0, 0, 0, 0, 10]
 ])
 
-
-
-
-# r_matrix = np.array([
-#     [1.8, 0, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0.7, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0.5, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0.5, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 10, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0.5, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 10, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0.5, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0, 10]
-# ])
-
-
-# r_matrix = np.array([
-#     [2, 0, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 1.5, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0.1, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0.1, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 5, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0.4, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 5, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0.1, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0, 5]
-# ])
-
-
-# r_matrix = np.array([
-#     [0.9, 0, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0.5, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0.1, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0.1, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0.2, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0.4, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0.3, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0.1, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0, 0.4]
-# ])
-
-
-
-
-
-
-# r_matrix = np.array([
-#     [5, 0, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 5, 0, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0.05, 0, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0.05, 0, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 10, 0, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 8, 0, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 10, 0, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 8, 0],
-#     [0, 0, 0, 0, 0, 0, 0, 0, 10]
-# ])
-
 # Define the scalar
 scalar = 300
 
 # Multiply the matrix by the scalar
 lqr_R = scalar * r_matrix
-
-# print(lqr_R)
-
-
-
 
 show_animation = True
 
@@ -157,7 +84,6 @@ link_pose_right = None
 # listener = tf.TransformListener()
 
 lock = Lock()
-
 
 
 def posefromMatrix(matrix):
@@ -180,8 +106,6 @@ def posefromMatrix(matrix):
     p.orientation.x = roll
     p.orientation.y = pitch
     p.orientation.z = yaw
-    # p.orientation.w = 0.0
-
     return p
 
 def image_callback(img_msg):
@@ -230,68 +154,26 @@ def image_callback(img_msg):
                 continue
 
             x_compensation = 0.34
-            # x_compensation = 0.42
             y_compensation = 0
             z_compensation = 0.0
-            # z_compensation = 0.17
-            # y_compensation = x_compensation * math.cos(math.degrees(link_pose_right.orientation.z))
-
-            # end_effector_pose = np.array([[link_pose_right.position.x + 0.25],
             end_effector_pose = np.array([[link_pose_right.position.x + x_compensation],
                             [link_pose_right.position.y - y_compensation],
                             [link_pose_right.position.z - z_compensation],
                             [link_pose_right.orientation.x],
                             [link_pose_right.orientation.y],
                             [link_pose_right.orientation.z]])
-            # print("End-Effector Position")
-            # print(link_pose_right.position)
-            #print(link_pose_right.position.y - y_compensation)
-            #print(link_pose_right.position.z - z_compensation)
 
-            print("==================================")
-
-
-            # end_effector_pose = np.array([[link_pose_right.position.x],
-            #                 [link_pose_right.position.y],
-            #                 [link_pose_right.position.z],
-            #                 [0.0],
-            #                 [0.0],
-            #                 [0.0]])
-            
-            # tag_pose.position.x = link_pose_right.position.x
-            # tag_pose.position.y = link_pose_right.position.y
-            # tag_pose.position.z = link_pose_right.position.z
-            # tag_pose.orientation.x = link_pose_right.orientation.x
-            # tag_pose.orientation.y = link_pose_right.orientation.y
-            # tag_pose.orientation.z = link_pose_right.orientation.z
-
-            #print("Tag Position")
-            #print(tag_pose.position.x)
-            #print(tag_pose.position.y)
-            #print(tag_pose.position.z)
-            #print(tag_pose.orientation.x)
-            #print(tag_pose.orientation.y)
-            #print(tag_pose.orientation.z)
-
-            # tag_pose.position.y = link_pose_right.position.y
             tag_pose.orientation.x = 0.0
             tag_pose.orientation.y = 0.0
             tag_pose.orientation.z = 0.0
 
-            # tag_pose.orientation.w = 0.
-
-
             ustar = lqr_speed_steering_control(end_effector_pose, tag_pose, base_heading_angle)
 
             ustar = np.insert(ustar, 2, 0, axis=0)
-            # print(ustar)
             arm_velocity = ustar[2:, 0].reshape(1, -1)
             base_velocity = ustar[:2, 0].reshape(1, -1)
 
             clamped_arm_velocity = np.clip(arm_velocity, -MAX_JOINT_VEL, MAX_JOINT_VEL)
-
-            print("-------------------------------------")
-            # print(clamped_arm_velocity)
 
             waypoints = [starting_joint_states]
 
@@ -316,11 +198,6 @@ def image_callback(img_msg):
         rospy.logerr("Error in image_callback: {0}".format(e))
 
 
-
-
-
-
-
 def callback(msg):  
     global link_pose_right
     global link_pose_left
@@ -337,7 +214,6 @@ def callback(msg):
             tf_matrices = get_tf_matrices(listener)
 
             matrix = tf_matrices["baseLinkToRightFinger"]
-            # print(matrix)
 
             link_pose_right = posefromMatrix(matrix)
 
@@ -370,7 +246,6 @@ def get_tf_matrices(listener):
         try:
           (trans,rot) = listener.lookupTransform('/base_link', '/base_link', rospy.Time(0))
           transformations["baseLinkTobaseLink"] = tf.TransformerROS.fromTranslationRotation(listener,translation=trans, rotation=rot)
-
 
           (trans,rot) = listener.lookupTransform('/base_link', '/shoulder_pan_link', rospy.Time(0))
           transformations["baseLinkToShoulderPan"] = tf.TransformerROS.fromTranslationRotation(listener,translation=trans, rotation=rot)
@@ -493,7 +368,6 @@ def dlqr(A, B, Q, R, tag_pose, end_effector_pose):
                                [tag_pose.orientation.z]])
     
     state_error_world = end_effector_pose - (tag_pose_)
-    # print(end_effector_pose)
 
     ustar = - M @ (P @ (state_error_world + (rt_c.reshape(-1,1) -  rt_p.reshape(-1,1))) + p )
   
@@ -534,14 +408,7 @@ def solve_dare(B, Q, R, tag_pose):
         
         body_xyz_in_horizon_2 = ([tag_pose.position.x],
                                   [tag_pose.position.y],
-                                  [tag_pose.position.z] ) 
-
-        # body_xyz_in_horizon_1_orientation = np.array([
-        #     [tag_pose.orientation.x],
-        #     [tag_pose.orientation.y],
-        #     [tag_pose.orientation.z]
-        # ])
-        
+                                  [tag_pose.position.z] )         
 
         body_xyz_in_horizon_1_orientation = np.array([
             [0.0],
@@ -589,62 +456,10 @@ def execute_waypoints_trajectory(waypoints, t, velocities):
     _joint_client.send_goal(goal)
 
 
-# def execute_waypoints_trajectory(waypoints, t, velocities):
-
-#     goal = FollowJointTrajectoryGoal()
-#     goal.trajectory.joint_names.extend(JOINT_NAMES)
-#     for i, w in enumerate(waypoints):
-#         point = JointTrajectoryPoint()
-#         goal.trajectory.points.append(point)
-#         goal.trajectory.points[i].time_from_start = rospy.Duration(t[i])
-#         for j, p in enumerate(waypoints[i]):
-#             goal.trajectory.points[i].positions.append(waypoints[i][j])
-
-#         waypoints = np.array(waypoints)
-
-#     _joint_client.send_goal(goal)
-
-
-
-# def execute_waypoints_trajectory(waypoints, t, v):
-
-#     goal = FollowJointTrajectoryGoal()
-#     goal.trajectory.joint_names=JOINT_NAMES
-#     point = JointTrajectoryPoint()
-#     point.positions = waypoints
-#     point.time_from_start =rospy.Duration(t)
-
-
-#     goal.trajectory.points.append(point)
-
-#     _joint_client.send_goal(goal)
-
-
-
-
-
-
-
-
-# def publish_base_velocity(velocity, durations):
-#     velocity_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
-#     twist = Twist()
-
-#     # rate = rospy.Rate(5) 
-
-#     twist.linear.x = velocity[0]
-#     twist.angular.z = velocity[1]
-#     velocity_publisher.publish(twist)
-#             # rate.sleep()
-
-
-
-
 def publish_base_velocity(base_velocities, durations):
     velocity_publisher = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
     twist = Twist()
 
-    # rate = rospy.Rate(5) 
     start_time = rospy.Time.now()
     current_duration = 0
 
@@ -661,9 +476,6 @@ if __name__ == '__main__':
     rospy.init_node('fetch_robot_controller', anonymous=True)
 
     dt = 0.2
-    # optimal_dts = [0.2]
-    # duration = [0.2]
-
     robot = FetchRobot()
     tracker = BoardTracker()
 
